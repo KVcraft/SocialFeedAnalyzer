@@ -1,6 +1,6 @@
-package stack;
+package org.stack;
 
-import org.example.Post;
+import org.avl.Post;
 
 public class Operation {
     public enum Type { ADD, REMOVE, UPDATE }

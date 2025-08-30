@@ -1,4 +1,4 @@
-package org.example;
+package org.avl;
 
 public class Post {
 
