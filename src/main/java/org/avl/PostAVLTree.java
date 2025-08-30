@@ -1,14 +1,14 @@
-package org.example;
+package org.avl;
 
 
 import static java.lang.Math.max;
 
 class AVLNode{
-    Post post;
+    heap.Post post;
     AVLNode left, right;
     int height;
 
-    AVLNode (Post post){
+    AVLNode (heap.Post post){
         this.post=post;
         height=1;
     }
@@ -67,7 +67,7 @@ public class PostAVLTree {
     }
 
     //Insert a post into AVL tree
-    private  AVLNode insertPost(AVLNode root, Post post){
+    private  AVLNode insertPost(AVLNode root, heap.Post post){
         if (root == null){
             return new AVLNode(post);
         }

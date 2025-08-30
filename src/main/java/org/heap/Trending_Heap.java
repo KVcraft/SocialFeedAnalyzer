@@ -1,4 +1,4 @@
-package org.example;
+package org.heap;
 
 import javafx.application.Application;
 import javafx.scene.Scene;

@@ -1,4 +1,4 @@
-package stack;
+package org.stack;
 
 public class Post {
     int id;
