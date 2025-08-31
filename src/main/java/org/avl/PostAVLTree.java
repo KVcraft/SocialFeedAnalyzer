@@ -1,14 +1,16 @@
 package org.avl;
 
 
+import javafx.scene.control.TextArea;
+
 import static java.lang.Math.max;
 
 class AVLNode{
-    heap.Post post;
+    Post post;
     AVLNode left, right;
     int height;
 
-    AVLNode (heap.Post post){
+    AVLNode (Post post){
         this.post=post;
         height=1;
     }
@@ -67,7 +69,7 @@ public class PostAVLTree {
     }
 
     //Insert a post into AVL tree
-    private  AVLNode insertPost(AVLNode root, heap.Post post){
+    private  AVLNode insertPost(AVLNode root, Post post){
         if (root == null){
             return new AVLNode(post);
         }
@@ -112,12 +114,26 @@ public class PostAVLTree {
         return  root;
     }
 
-    //Print tree inOrder
-    public void printInOrder(AVLNode node){
-        if(node != null){
-            printInOrder(node.left);
-            System.out.print(node.post.content+ " (likes :" +node.post.likes+ ")");
-            printInOrder(node.right);
+    //Wrapper for insert a post
+    public void insertPostWrapper(Post post) {
+        root = insertPost(root, post);
+    }
+
+    //Wrapper for print post in-order
+    public void printInOrderWrapper(TextArea area) {
+        printInOrder(root, area);
+    }
+
+    //In-order traversal for displaying posts
+    private void printInOrder(AVLNode node, TextArea area) {
+        if (node != null) {
+            printInOrder(node.left, area);
+            area.appendText("ID: " + node.post.postId +
+                    ", Content: " + node.post.content +
+                    ", Author: " + node.post.author +
+                    ", Likes: " + node.post.likes +
+                    ", Time: " + node.post.timestamp + "\n");
+            printInOrder(node.right, area);
         }
     }
 
