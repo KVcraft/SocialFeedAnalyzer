@@ -1,95 +1,62 @@
 package org.heap;
 
-import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Line;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Text;
-import javafx.stage.Stage;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.Post;
+import org.stack.UndoRedoManager;
 import java.util.PriorityQueue;
 
-class Post {
-    int id;
-    String content;
-    int likes;
-
-    Post(int id, String content, int likes) {
-        this.id = id;
-        this.content = content;
-        this.likes = likes;
-    }
-
-    @Override
-    public String toString() {
-        return content + " (" + likes + ")";
-    }
-}
-
-public class Trending_Heap extends Application {
+public class Trending_Heap {
     private PriorityQueue<Post> heap = new PriorityQueue<>((a, b) -> b.likes - a.likes);
+    private UndoRedoManager history = new UndoRedoManager();
 
-    @Override
-    public void start(Stage stage) {
-        // Sample posts
-        heap.add(new Post(1, "First post!", 50));
-        heap.add(new Post(2, "Funny meme", 200));
-        heap.add(new Post(3, "Serious rant", 120));
-        heap.add(new Post(4, "Breaking news", 90));
-        heap.add(new Post(5, "Tech update", 75));
-
-        // Convert heap to list (array-representation of heap)
-        List<Post> heapArray = new ArrayList<>(heap);
-
-        Pane root = new Pane();
-
-        // Recursively draw heap as binary tree
-        drawHeap(root, heapArray, 0, 250, 50, 120);
-
-        Scene scene = new Scene(root, 800, 600);
-        stage.setTitle("Trending Heap Visualizer");
-        stage.setScene(scene);
-        stage.show();
+    public void addPost(Post post) {
+        heap.add(post);
+        history.addOperation(new UndoRedoManager.Operation(UndoRedoManager.Type.ADD, post));
     }
 
-    private void drawHeap(Pane root, List<Post> heapArray, int index, double x, double y, double hGap) {
-        if (index >= heapArray.size()) return;
-
-        // Draw current node
-        Rectangle rect = new Rectangle(x - 40, y - 20, 80, 40);
-        rect.setFill(Color.LIGHTBLUE);
-        rect.setStroke(Color.BLACK);
-
-        Text text = new Text(x - 35, y + 5, heapArray.get(index).toString());
-
-        root.getChildren().addAll(rect, text);
-
-        // Left child index
-        int left = 2 * index + 1;
-        // Right child index
-        int right = 2 * index + 2;
-
-        // Draw edges + children
-        if (left < heapArray.size()) {
-            double childX = x - hGap;
-            double childY = y + 100;
-            root.getChildren().add(new Line(x, y + 20, childX, childY - 20));
-            drawHeap(root, heapArray, left, childX, childY, hGap / 2);
-        }
-
-        if (right < heapArray.size()) {
-            double childX = x + hGap;
-            double childY = y + 100;
-            root.getChildren().add(new Line(x, y + 20, childX, childY - 20));
-            drawHeap(root, heapArray, right, childX, childY, hGap / 2);
+    public void removePost(Post post) {
+        if (heap.remove(post)) {
+            history.addOperation(new UndoRedoManager.Operation(UndoRedoManager.Type.REMOVE, post));
         }
     }
 
-    public static void main(String[] args) {
-        launch();
+    public void updateLikes(Post post, int newLikes) {
+        int oldLikes = post.likes;
+        heap.remove(post);
+        post.likes = newLikes;
+        heap.add(post);
+        history.addOperation(new UndoRedoManager.Operation(UndoRedoManager.Type.UPDATE, post, oldLikes, newLikes));
+    }
+
+    public PriorityQueue<Post> getHeap() {
+        return new PriorityQueue<>(heap); // return a copy to avoid modification
+    }
+
+
+    public void undo() {
+        UndoRedoManager.Operation op = history.undo();
+        if (op == null) return;
+        switch (op.type) {
+            case ADD -> heap.remove(op.post);
+            case REMOVE -> heap.add(op.post);
+            case UPDATE -> { heap.remove(op.post); op.post.likes = op.oldLikes; heap.add(op.post); }
+        }
+    }
+
+    public void redo() {
+        UndoRedoManager.Operation op = history.redo();
+        if (op == null) return;
+        switch (op.type) {
+            case ADD -> heap.add(op.post);
+            case REMOVE -> heap.remove(op.post);
+            case UPDATE -> { heap.remove(op.post); op.post.likes = op.newLikes; heap.add(op.post); }
+        }
+    }
+
+    public void printTopK(int k) {
+        PriorityQueue<Post> copy = new PriorityQueue<>(heap);
+        for (int i = 0; i < k && !copy.isEmpty(); i++) {
+            System.out.println(copy.poll());
+        }
     }
 }
+

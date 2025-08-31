@@ -1,124 +1,74 @@
 package org.avl;
 
+import org.Post;
 
 import static java.lang.Math.max;
 
-class AVLNode{
-    heap.Post post;
+class AVLNode {
+    Post post;
     AVLNode left, right;
     int height;
 
-    AVLNode (heap.Post post){
-        this.post=post;
-        height=1;
+    AVLNode(Post post) {
+        this.post = post;
+        height = 1;
     }
 }
 
 public class PostAVLTree {
-
     private AVLNode root;
 
-    //Get the height of the node
-    private int height(AVLNode node){
-        if (node==null){
-           return 0;
-        }
-        return node.height;
+    private int height(AVLNode node) { return (node == null) ? 0 : node.height; }
+    private int getBalance(AVLNode node) { return (node == null) ? 0 : height(node.left) - height(node.right); }
+
+    private AVLNode rotateRight(AVLNode y) {
+        AVLNode x = y.left, T2 = x.right;
+        x.right = y; y.left = T2;
+        y.height = max(height(y.left), height(y.right)) + 1;
+        x.height = max(height(x.left), height(x.right)) + 1;
+        return x;
     }
 
-    //Get balance factor
-    private int getBalance(AVLNode node){
-        if (node==null){
-            return 0;
-        }
-        return height(node.left) - height(node.right);
+    private AVLNode rotateLeft(AVLNode x) {
+        AVLNode y = x.right, T2 = y.left;
+        y.left = x; x.right = T2;
+        x.height = max(height(x.left), height(x.right)) + 1;
+        y.height = max(height(y.left), height(y.right)) + 1;
+        return y;
     }
 
-    //Right rotate subtree rooted with node
-    private AVLNode rotateRight(AVLNode node){
-        AVLNode leftChild = node.left;
-        AVLNode temp = leftChild.right;
+    private AVLNode insert(AVLNode node, Post post) {
+        if (node == null) return new AVLNode(post);
 
-        //Perform rotation
-        leftChild.right = node;
-        node.left = temp;
+        if (post.timestamp < node.post.timestamp) node.left = insert(node.left, post);
+        else if (post.timestamp > node.post.timestamp) node.right = insert(node.right, post);
+        else return node;
 
-        //Update heights
-        node.height = max(height(node.left), height(node.right)) + 1;
-        leftChild.height = max(height(leftChild.left), height(leftChild.right)) + 1;
+        node.height = 1 + max(height(node.left), height(node.right));
+        int balance = getBalance(node);
 
-        return leftChild;
+        if (balance > 1 && post.timestamp < node.left.post.timestamp) return rotateRight(node);
+        if (balance < -1 && post.timestamp > node.right.post.timestamp) return rotateLeft(node);
+        if (balance > 1 && post.timestamp > node.left.post.timestamp) {
+            node.left = rotateLeft(node.left);
+            return rotateRight(node);
+        }
+        if (balance < -1 && post.timestamp < node.right.post.timestamp) {
+            node.right = rotateRight(node.right);
+            return rotateLeft(node);
+        }
+        return node;
     }
 
-    //Left rotate subtree rooted with node
-    private AVLNode rotateLeft(AVLNode node){
-        AVLNode rightChild = node.right;
-        AVLNode temp = rightChild.left;
+    public void addPost(Post post) { root = insert(root, post); }
 
-        //Perform rotation
-        rightChild.left = node;
-        node.right = temp;
-
-        //Update heights
-        node.height = max(height(node.left), height(node.right)) + 1;
-        rightChild.height = max(height(rightChild.left), height(rightChild.right)) + 1;
-
-        return rightChild;
-    }
-
-    //Insert a post into AVL tree
-    private  AVLNode insertPost(AVLNode root, heap.Post post){
-        if (root == null){
-            return new AVLNode(post);
-        }
-
-        //Sort by timestamp
-        if(post.timestamp < root.post.timestamp){
-            root.left = insertPost(root.left, post);
-        } else if(post.timestamp >root.post.timestamp){
-            root.right = insertPost(root.right, post);
-        } else{
-            return root;
-        }
-
-        //Update height of root
-        root.height = 1 + max(height(root.left), height(root.right));
-
-        //Get balance factor
-        int balance = getBalance(root);
-
-        //LL case
-        if(balance > 1 && post.timestamp < root.left.post.timestamp){
-            return rotateRight(root);
-        }
-
-        //RR case
-        if(balance < -1 && post.timestamp < root.right.post.timestamp){
-            return rotateLeft(root);
-        }
-
-        //LR case
-        if (balance > 1 && post.timestamp > root.left.post.timestamp) {
-            root.left = rotateLeft(root.left);
-            return rotateRight(root);
-        }
-
-        //RL case
-        if (balance < -1 && post.timestamp > root.right.post.timestamp) {
-            root.left = rotateRight(root.left);
-            return rotateLeft(root);
-        }
-
-        return  root;
-    }
-
-    //Print tree inOrder
-    public void printInOrder(AVLNode node){
-        if(node != null){
+    public void printInOrder() { printInOrder(root); }
+    private void printInOrder(AVLNode node) {
+        if (node != null) {
             printInOrder(node.left);
-            System.out.print(node.post.content+ " (likes :" +node.post.likes+ ")");
+            System.out.println(node.post);
             printInOrder(node.right);
         }
     }
-
 }
+
