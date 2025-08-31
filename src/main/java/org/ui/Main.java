@@ -15,6 +15,9 @@ import java.util.*;
 public class Main extends Application {
 
     private Graph graph = new Graph();
+    private Map<String, Circle> nodeCircles = new HashMap<>();
+    private Map<String, Text> nodeLabels = new HashMap<>();
+    private List<Line> edges = new ArrayList<>();
 
     @Override
     public void start(Stage stage) {
@@ -26,12 +29,13 @@ public class Main extends Application {
 
         graph.addConnection("U1", "U2");
         graph.addConnection("U1", "U3");
+        graph.addConnection("U3", "U4"); // added extra edge to test
 
         Group root = new Group();
 
         // Layout: place nodes in a circle
-        int radius = 150;   // circle radius
-        int centerX = 250;  // canvas center
+        int radius = 150;
+        int centerX = 250;
         int centerY = 250;
 
         List<String> users = new ArrayList<>(graph.getAllUsers());
@@ -53,6 +57,7 @@ public class Main extends Application {
 
                 Line line = new Line(fromPos[0], fromPos[1], toPos[0], toPos[1]);
                 line.setStroke(Color.GRAY);
+                edges.add(line);
                 root.getChildren().add(line);
             }
         }
@@ -66,6 +71,13 @@ public class Main extends Application {
 
             Text label = new Text(pos[0] - 10, pos[1] + 5, user);
 
+            nodeCircles.put(user, circle);
+            nodeLabels.put(user, label);
+
+            // Hover effect: highlight connected nodes and edges
+            circle.setOnMouseEntered(e -> highlight(user));
+            circle.setOnMouseExited(e -> resetColors());
+
             root.getChildren().addAll(circle, label);
         }
 
@@ -73,6 +85,49 @@ public class Main extends Application {
         stage.setTitle("Social Graph Visualization");
         stage.setScene(scene);
         stage.show();
+    }
+
+    private void highlight(String user) {
+        resetColors();
+
+        // highlight the hovered node
+        nodeCircles.get(user).setFill(Color.ORANGE);
+
+        // highlight its connections (both directions)
+        for (String friend : graph.getAllUsers()) {
+            if (graph.getConnections(user).contains(friend) || graph.getConnections(friend).contains(user)) {
+                nodeCircles.get(friend).setFill(Color.YELLOW);
+                highlightEdge(user, friend);
+            }
+        }
+    }
+
+    private void highlightEdge(String user1, String user2) {
+        // highlight edges connecting user1 <-> user2
+        for (Line line : edges) {
+            double x1 = nodeCircles.get(user1).getCenterX();
+            double y1 = nodeCircles.get(user1).getCenterY();
+            double x2 = nodeCircles.get(user2).getCenterX();
+            double y2 = nodeCircles.get(user2).getCenterY();
+
+            if ((line.getStartX() == x1 && line.getStartY() == y1 &&
+                    line.getEndX() == x2 && line.getEndY() == y2) ||
+                    (line.getStartX() == x2 && line.getStartY() == y2 &&
+                            line.getEndX() == x1 && line.getEndY() == y1)) {
+                line.setStroke(Color.RED);
+                line.setStrokeWidth(2.5);
+            }
+        }
+    }
+
+    private void resetColors() {
+        for (Circle circle : nodeCircles.values()) {
+            circle.setFill(Color.LIGHTBLUE);
+        }
+        for (Line line : edges) {
+            line.setStroke(Color.GRAY);
+            line.setStrokeWidth(1);
+        }
     }
 
     public static void main(String[] args) {
